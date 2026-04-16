@@ -1,6 +1,7 @@
-# Baseline image directory (large binaries)
+# Baseline image directory (large binaries + tool with own git repo)
 baseline-2.42/seestarOS.img
 baseline-2.42/seestarOS.zip
+baseline-2.42/rkdeveloptool/
 *.img
 *.zip
 
