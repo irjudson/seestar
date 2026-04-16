@@ -1,0 +1,152 @@
+# Firmware Comparison: v2.7.0 → v3.0.0
+
+## Version Changes
+| | v2.7.0 | v3.0.0 |
+|--|--|--|
+| MCU firmware | Seestar_2.1.4.bin | Seestar_2.1.9.bin |
+| MCU version | 2.1.4 | 2.1.9 |
+| ASIAIR deb | 5.93 | 6.45 |
+
+## Files Added (137)
+
+- `deb-build/Alpaca/ASCOM.Alpaca.Device.dll`
+- `deb-build/Alpaca/ASCOM.Alpaca.Device.xml`
+- `deb-build/Alpaca/ASCOM.Alpaca.Razor.dll`
+- `deb-build/Alpaca/ASCOM.Alpaca.Razor.pdb`
+- `deb-build/Alpaca/ASCOM.Alpaca.Razor.xml`
+- `deb-build/Alpaca/ASCOM.AstrometryTools.dll`
+- `deb-build/Alpaca/ASCOM.AstrometryTools.xml`
+- `deb-build/Alpaca/ASCOM.Common.dll`
+- `deb-build/Alpaca/ASCOM.Common.xml`
+- `deb-build/Alpaca/ASCOM.DeviceInterfaces.dll`
+- `deb-build/Alpaca/ASCOM.DeviceInterfaces.xml`
+- `deb-build/Alpaca/ASCOM.Exceptions.dll`
+- `deb-build/Alpaca/ASCOM.Exceptions.xml`
+- `deb-build/Alpaca/ASCOM.Tools.dll`
+- `deb-build/Alpaca/ASCOM.Tools.xml`
+- `deb-build/Alpaca/Alpaca.sh`
+- `deb-build/Alpaca/AlpacaDaemon.sh`
+- `deb-build/Alpaca/Blazored.Toast.dll`
+- `deb-build/Alpaca/Camera.dll`
+- `deb-build/Alpaca/Camera.pdb`
+- `deb-build/Alpaca/CoverCalibrator.dll`
+- `deb-build/Alpaca/CoverCalibrator.pdb`
+- `deb-build/Alpaca/Dome.dll`
+- `deb-build/Alpaca/Dome.pdb`
+- `deb-build/Alpaca/FilterWheel.dll`
+- `deb-build/Alpaca/FilterWheel.pdb`
+- `deb-build/Alpaca/Focuser.dll`
+- `deb-build/Alpaca/Focuser.pdb`
+- `deb-build/Alpaca/LetsMake.GithubUpdateChecker.dll`
+- `deb-build/Alpaca/ObservingConditions.dll`
+- `deb-build/Alpaca/ObservingConditions.pdb`
+- `deb-build/Alpaca/OmniSim.Tools.dll`
+- `deb-build/Alpaca/OmniSim.Tools.pdb`
+- `deb-build/Alpaca/Rotator.dll`
+- `deb-build/Alpaca/Rotator.pdb`
+- `deb-build/Alpaca/SafetyMonitor.dll`
+- `deb-build/Alpaca/SafetyMonitor.pdb`
+- `deb-build/Alpaca/SeestarCtrl.dll`
+- `deb-build/Alpaca/SeestarCtrl.pdb`
+- `deb-build/Alpaca/Serilog.Sinks.Console.dll`
+- `deb-build/Alpaca/Serilog.Sinks.Console.xml`
+- `deb-build/Alpaca/Serilog.Sinks.File.dll`
+- `deb-build/Alpaca/Serilog.Sinks.File.xml`
+- `deb-build/Alpaca/Serilog.dll`
+- `deb-build/Alpaca/Serilog.xml`
+- `deb-build/Alpaca/Switch.dll`
+- `deb-build/Alpaca/Switch.pdb`
+- `deb-build/Alpaca/Telescope.dll`
+- `deb-build/Alpaca/Telescope.pdb`
+- `deb-build/Alpaca/WindowsBase.Vector.dll`
+- `deb-build/Alpaca/WindowsBase.Vector.pdb`
+- `deb-build/Alpaca/appsettings.Development.json`
+- `deb-build/Alpaca/appsettings.json`
+- `deb-build/Alpaca/ascom.alpaca`
+- `deb-build/Alpaca/ascom.alpaca.deps.json`
+- `deb-build/Alpaca/ascom.alpaca.dll`
+- `deb-build/Alpaca/ascom.alpaca.pdb`
+- `deb-build/Alpaca/ascom.alpaca.runtimeconfig.json`
+- `deb-build/Alpaca/ascom.alpaca.staticwebassets.endpoints.json`
+- `deb-build/Alpaca/ascom.alpaca.xml`
+- `deb-build/Alpaca/createdump`
+- `deb-build/Alpaca/license.md`
+- `deb-build/Alpaca/m42-800x600.jpg`
+- `deb-build/Alpaca/version.txt`
+- `deb-build/Alpaca/wwwroot/_content/ASCOM.Alpaca.Razor/background.png`
+- `deb-build/Alpaca/wwwroot/_content/Blazored.Toast/Blazored.Toast.bundle.scp.css`
+- `deb-build/Alpaca/wwwroot/ascom.alpaca.styles.css`
+- `deb-build/Alpaca/wwwroot/css/bootstrap/bootstrap.min.css`
+- `deb-build/Alpaca/wwwroot/css/bootstrap/bootstrap.min.css.map`
+- `deb-build/Alpaca/wwwroot/css/open-iconic/FONT-LICENSE`
+- `deb-build/Alpaca/wwwroot/css/open-iconic/ICON-LICENSE`
+- `deb-build/Alpaca/wwwroot/css/open-iconic/README.md`
+- `deb-build/Alpaca/wwwroot/css/open-iconic/font/css/open-iconic-bootstrap.min.css`
+- `deb-build/Alpaca/wwwroot/css/open-iconic/font/fonts/open-iconic.eot`
+- `deb-build/Alpaca/wwwroot/css/open-iconic/font/fonts/open-iconic.otf`
+- `deb-build/Alpaca/wwwroot/css/open-iconic/font/fonts/open-iconic.svg`
+- `deb-build/Alpaca/wwwroot/css/open-iconic/font/fonts/open-iconic.ttf`
+- `deb-build/Alpaca/wwwroot/css/open-iconic/font/fonts/open-iconic.woff`
+- `deb-build/Alpaca/wwwroot/css/site.css`
+- `deb-build/Alpaca/wwwroot/favicon.ico`
+- `deb-build/asiair_armhf/home/pi/ASIAIR/logo/seestar.png`
+- `deb-build/asiair_armhf/home/pi/ASIAIR/sound/en40.wav`
+- `deb-build/asiair_armhf/home/pi/ASIAIR/sound/en41.wav`
+- `deb-build/asiair_armhf/home/pi/ASIAIR/sound/en42.wav`
+- `deb-build/asiair_armhf/home/pi/ASIAIR/sound/fr40.wav`
+- `deb-build/asiair_armhf/home/pi/ASIAIR/sound/fr41.wav`
+- `deb-build/asiair_armhf/home/pi/ASIAIR/sound/fr42.wav`
+- `deb-build/asiair_armhf/home/pi/ASIAIR/sound/ja40.wav`
+- `deb-build/asiair_armhf/home/pi/ASIAIR/sound/ja41.wav`
+- `deb-build/asiair_armhf/home/pi/ASIAIR/sound/ja42.wav`
+- `deb-build/asiair_armhf/home/pi/ASIAIR/sound/ko40.wav`
+- `deb-build/asiair_armhf/home/pi/ASIAIR/sound/ko41.wav`
+- `deb-build/asiair_armhf/home/pi/ASIAIR/sound/ko42.wav`
+- `deb-build/asiair_armhf/home/pi/ASIAIR/sound/zh40.wav`
+- `deb-build/asiair_armhf/home/pi/ASIAIR/sound/zh41.wav`
+- `deb-build/asiair_armhf/home/pi/ASIAIR/sound/zh42.wav`
+- `deb-build/sysfiles/oem/third/lib/libzwo_cloud.so.0.0`
+- `deb-build/sysfiles/oem/third/lib/libzwo_features.so.0.0`
+- `deb-build/sysfiles/oem/third/lib/libzwo_stitch.so.0.0`
+- `deb-build/sysfiles/oem/zwo/ai_model/skyseg_int8_rknn2.rknn`
+- `deb-build/sysfiles/oem/zwo/bin/zwo_cp_find`
+- `deb-build/sysfiles/oem/zwo/bin/zwo_enblend`
+- `deb-build/sysfiles/oem/zwo/bin/zwo_gen_base`
+- `deb-build/sysfiles/oem/zwo/bin/zwo_linefind`
+- `deb-build/sysfiles/oem/zwo/bin/zwo_modify_pano`
+- `deb-build/sysfiles/oem/zwo/bin/zwo_optimiser`
+- `deb-build/sysfiles/oem/zwo/bin/zwo_remap`
+- `deb-build/sysfiles/oem/zwo/iqfiles/S30P/MOON/imx585_CMK-OT1234-FV0_M00-2MP-F00.json`
+- `deb-build/sysfiles/oem/zwo/iqfiles/S30P/MOON/imx586_YT-RV1109-2-V1_40IR-2MP-F20.json`
+- `deb-build/sysfiles/oem/zwo/iqfiles/S30P/NORMAL/imx585_CMK-OT1234-FV0_M00-2MP-F00.json`
+- `deb-build/sysfiles/oem/zwo/iqfiles/S30P/NORMAL/imx586_YT-RV1109-2-V1_40IR-2MP-F20.json`
+- `deb-build/sysfiles/oem/zwo/iqfiles/S30P/PLANET/imx585_CMK-OT1234-FV0_M00-2MP-F00.json`
+- `deb-build/sysfiles/oem/zwo/iqfiles/S30P/PLANET/imx586_YT-RV1109-2-V1_40IR-2MP-F20.json`
+- `deb-build/sysfiles/oem/zwo/iqfiles/S30P/SUN/imx585_CMK-OT1234-FV0_M00-2MP-F00.json`
+- `deb-build/sysfiles/oem/zwo/iqfiles/S30P/SUN/imx586_YT-RV1109-2-V1_40IR-2MP-F20.json`
+- `deb-build/sysfiles/oem/zwo/iqfiles/S30Plus/MOON/imx586_YT-RV1109-2-V1_40IR-2MP-F20.json`
+- `deb-build/sysfiles/oem/zwo/iqfiles/S30Plus/MOON/imx662_CMK-OT1234-FV0_M00-2MP-F00.json`
+- `deb-build/sysfiles/oem/zwo/iqfiles/S30Plus/NORMAL/imx586_YT-RV1109-2-V1_40IR-2MP-F20.json`
+- `deb-build/sysfiles/oem/zwo/iqfiles/S30Plus/NORMAL/imx662_CMK-OT1234-FV0_M00-2MP-F00.json`
+- `deb-build/sysfiles/oem/zwo/iqfiles/S30Plus/PLANET/imx586_YT-RV1109-2-V1_40IR-2MP-F20.json`
+- `deb-build/sysfiles/oem/zwo/iqfiles/S30Plus/PLANET/imx662_CMK-OT1234-FV0_M00-2MP-F00.json`
+- `deb-build/sysfiles/oem/zwo/iqfiles/S30Plus/SUN/imx586_YT-RV1109-2-V1_40IR-2MP-F20.json`
+- `deb-build/sysfiles/oem/zwo/iqfiles/S30Plus/SUN/imx662_CMK-OT1234-FV0_M00-2MP-F00.json`
+- `deb-build/sysfiles/oem/zwo/iqfiles/S50P/MOON/imx585_CMK-OT1234-FV0_M00-2MP-F00.json`
+- `deb-build/sysfiles/oem/zwo/iqfiles/S50P/MOON/imx586_YT-RV1109-2-V1_40IR-2MP-F20.json`
+- `deb-build/sysfiles/oem/zwo/iqfiles/S50P/NORMAL/imx585_CMK-OT1234-FV0_M00-2MP-F00.json`
+- `deb-build/sysfiles/oem/zwo/iqfiles/S50P/NORMAL/imx586_YT-RV1109-2-V1_40IR-2MP-F20.json`
+- `deb-build/sysfiles/oem/zwo/iqfiles/S50P/PLANET/imx585_CMK-OT1234-FV0_M00-2MP-F00.json`
+- `deb-build/sysfiles/oem/zwo/iqfiles/S50P/PLANET/imx586_YT-RV1109-2-V1_40IR-2MP-F20.json`
+- `deb-build/sysfiles/oem/zwo/iqfiles/S50P/SUN/imx585_CMK-OT1234-FV0_M00-2MP-F00.json`
+- `deb-build/sysfiles/oem/zwo/iqfiles/S50P/SUN/imx586_YT-RV1109-2-V1_40IR-2MP-F20.json`
+- `deb-build/sysfiles/usr/bin/pigz`
+- `deb-build/sysfiles/usr/bin/plot-constellations_my`
+- `others/S30 Plus/update.img`
+- `others/S30 Pro/update.img`
+- `others/S50 Pro/update.img`
+- `others/Seestar_2.1.9.bin`
+
+## Files Removed (1)
+
+- `others/Seestar_2.1.4.bin`

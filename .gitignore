@@ -1,0 +1,34 @@
+# Large binary / disk images
+seestarOS.img
+seestarOS.zip
+*.img
+*.zip
+
+# Device filesystem extract (large, read-only reference)
+s50-fs/
+
+# APK archives (large binaries; keep current APKs out too)
+apks/
+
+# Firmware packages (large binaries)
+firmware/packages/
+firmware/signed/
+
+# Decompiled source (generated; re-run jadx to rebuild)
+firmware/decompiled/
+
+# Python virtualenv
+analysis/.venv/
+**/.venv/
+
+# Python build artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Editor
+.DS_Store
+*.swp
