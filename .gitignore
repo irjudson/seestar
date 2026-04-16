@@ -1,10 +1,10 @@
-# Large binary / disk images
-seestarOS.img
-seestarOS.zip
+# Baseline image directory (large binaries)
+baseline-2.42/seestarOS.img
+baseline-2.42/seestarOS.zip
 *.img
 *.zip
 
-# Device filesystem extract (large, read-only reference)
+# Device filesystem extract (rsync from working scope, large)
 s50-fs/
 
 # APK archives (large binaries; keep current APKs out too)
