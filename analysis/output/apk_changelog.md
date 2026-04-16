@@ -1,9 +1,8 @@
 # Seestar v1.18.0 → v1.19.0 Comparison
 
 ## Version Mapping Changes
-
 | Field | v1.18.0 | v1.19.0 |
-|-------|————————|————————|
+|-------|--------|--------|
 | Target firmware (32-bit) ⚠️ | `2.53` | `2.61` |
 | Target firmware (64-bit) | `—` | `—` |
 | Pushes device to | `—` | `—` |
@@ -28,9 +27,8 @@ No changes detected.
 # Seestar v1.19.0 → v1.20.0 Comparison
 
 ## Version Mapping Changes
-
 | Field | v1.19.0 | v1.20.0 |
-|-------|————————|————————|
+|-------|--------|--------|
 | Target firmware (32-bit) ⚠️ | `2.61` | `2.71` |
 | Target firmware (64-bit) | `—` | `—` |
 | Pushes device to | `—` | `—` |
@@ -63,7 +61,7 @@ No changes detected.
 ## Version Mapping Changes
 
 | Field | v1.20.0 | v1.20.2 |
-|-------|————————|————————|
+|-------|--------|--------|
 | Target firmware (32-bit) ⚠️ | `2.71` | `2.76` |
 | Target firmware (64-bit) | `—` | `—` |
 | Pushes device to | `—` | `—` |
@@ -90,7 +88,7 @@ No changes detected.
 ## Version Mapping Changes
 
 | Field | v1.20.2 | v2.0.0 |
-|-------|————————|———————|
+|-------|--------|-------|
 | Target firmware (32-bit) ⚠️ | `2.76` | `2.95` |
 | Target firmware (64-bit) | `—` | `—` |
 | Pushes device to | `—` | `—` |
@@ -127,7 +125,7 @@ No changes detected.
 ## Version Mapping Changes
 
 | Field | v2.0.0 | v2.1.0 |
-|-------|———————|———————|
+|-------|-------|--------|
 | Target firmware (32-bit) ⚠️ | `2.95` | `3.31` |
 | Target firmware (64-bit) | `—` | `—` |
 | Pushes device to | `—` | `—` |
@@ -165,7 +163,7 @@ No changes detected.
 ## Version Mapping Changes
 
 | Field | v2.1.0 | v2.2.0 |
-|-------|———————|———————|
+|-------|-------|--------|
 | Target firmware (32-bit) ⚠️ | `3.31` | `7.32` |
 | Target firmware (64-bit) ⚠️ | `—` | `7.32` |
 | Pushes device to ⚠️ | `—` | `7.32` |
@@ -267,7 +265,7 @@ No changes detected.
 ## Version Mapping Changes
 
 | Field | v2.2.0 | v2.2.1 |
-|-------|———————|———————|
+|-------|-------|--------|
 | Target firmware (32-bit) | `7.32` | `7.32` |
 | Target firmware (64-bit) | `7.32` | `7.32` |
 | Pushes device to | `7.32` | `7.32` |
@@ -294,7 +292,7 @@ No changes detected.
 ## Version Mapping Changes
 
 | Field | v2.2.1 | v2.3.0 |
-|-------|———————|———————|
+|-------|-------|--------|
 | Target firmware (32-bit) ⚠️ | `7.32` | `4.00` |
 | Target firmware (64-bit) ⚠️ | `7.32` | `—` |
 | Pushes device to ⚠️ | `7.32` | `—` |
@@ -386,7 +384,7 @@ No changes detected.
 ## Version Mapping Changes
 
 | Field | v2.3.0 | v2.3.1 |
-|-------|———————|———————|
+|-------|-------|--------|
 | Target firmware (32-bit) ⚠️ | `4.00` | `4.02` |
 | Target firmware (64-bit) | `—` | `—` |
 | Pushes device to | `—` | `—` |
@@ -413,7 +411,7 @@ No changes detected.
 ## Version Mapping Changes
 
 | Field | v2.3.1 | v2.4.0 |
-|-------|———————|———————|
+|-------|-------|--------|
 | Target firmware (32-bit) ⚠️ | `4.02` | `4.27` |
 | Target firmware (64-bit) | `—` | `—` |
 | Pushes device to | `—` | `—` |
@@ -461,7 +459,7 @@ No changes detected.
 ## Version Mapping Changes
 
 | Field | v2.4.0 | v2.4.1 |
-|-------|———————|———————|
+|-------|-------|--------|
 | Target firmware (32-bit) ⚠️ | `4.27` | `4.43` |
 | Target firmware (64-bit) | `—` | `—` |
 | Pushes device to | `—` | `—` |
@@ -488,7 +486,7 @@ No changes detected.
 ## Version Mapping Changes
 
 | Field | v2.4.1 | v2.5.0 |
-|-------|———————|———————|
+|-------|-------|--------|
 | Target firmware (32-bit) ⚠️ | `4.43` | `4.70` |
 | Target firmware (64-bit) | `—` | `—` |
 | Pushes device to | `—` | `—` |
@@ -531,7 +529,7 @@ No changes detected.
 ## Version Mapping Changes
 
 | Field | v2.5.0 | v2.6.0 |
-|-------|———————|———————|
+|-------|-------|--------|
 | Target firmware (32-bit) ⚠️ | `4.70` | `5.34` |
 | Target firmware (64-bit) | `—` | `—` |
 | Pushes device to | `—` | `—` |
@@ -574,7 +572,7 @@ No changes detected.
 ## Version Mapping Changes
 
 | Field | v2.6.0 | v2.6.1 |
-|-------|———————|———————|
+|-------|-------|--------|
 | Target firmware (32-bit) ⚠️ | `5.34` | `5.50` |
 | Target firmware (64-bit) | `—` | `—` |
 | Pushes device to | `—` | `—` |
@@ -601,7 +599,7 @@ No changes detected.
 ## Version Mapping Changes
 
 | Field | v2.6.1 | v2.6.4 |
-|-------|———————|———————|
+|-------|-------|--------|
 | Target firmware (32-bit) ⚠️ | `5.50` | `5.82` |
 | Target firmware (64-bit) | `—` | `—` |
 | Pushes device to | `—` | `—` |
@@ -665,7 +663,7 @@ No changes detected.
 ## Version Mapping Changes
 
 | Field | v2.6.4 | v2.7.0 |
-|-------|———————|———————|
+|-------|-------|--------|
 | Target firmware (32-bit) ⚠️ | `5.82` | `5.97` |
 | Target firmware (64-bit) | `—` | `—` |
 | Pushes device to | `—` | `—` |
@@ -692,7 +690,7 @@ No changes detected.
 ## Version Mapping Changes
 
 | Field | v2.7.0 | v3.0.0 |
-|-------|———————|———————|
+|-------|-------|--------|
 | Target firmware (32-bit) ⚠️ | `5.97` | `6.45` |
 | Target firmware (64-bit) ⚠️ | `—` | `6.45` |
 | Pushes device to ⚠️ | `—` | `6.45` |
@@ -737,7 +735,7 @@ No changes detected.
 ## Version Mapping Changes
 
 | Field | v3.0.0 | v3.0.1 |
-|-------|———————|———————|
+|-------|-------|--------|
 | Target firmware (32-bit) ⚠️ | `6.45` | `6.58` |
 | Target firmware (64-bit) ⚠️ | `6.45` | `6.58` |
 | Pushes device to ⚠️ | `6.45` | `6.58` |
@@ -773,7 +771,7 @@ No changes detected.
 ## Version Mapping Changes
 
 | Field | v3.0.1 | v3.0.2 |
-|-------|———————|———————|
+|-------|-------|--------|
 | Target firmware (32-bit) ⚠️ | `6.58` | `6.70` |
 | Target firmware (64-bit) ⚠️ | `6.58` | `6.70` |
 | Pushes device to ⚠️ | `6.58` | `6.70` |
@@ -800,7 +798,7 @@ No changes detected.
 ## Version Mapping Changes
 
 | Field | v3.0.2 | v3.1.0 |
-|-------|———————|———————|
+|-------|-------|--------|
 | Target firmware (32-bit) ⚠️ | `6.70` | `7.06` |
 | Target firmware (64-bit) ⚠️ | `6.70` | `7.06` |
 | Pushes device to ⚠️ | `6.70` | `7.06` |
@@ -834,7 +832,7 @@ No changes detected.
 ## Version Mapping Changes
 
 | Field | v3.1.0 | v3.1.1 |
-|-------|———————|———————|
+|-------|-------|--------|
 | Target firmware (32-bit) ⚠️ | `7.06` | `7.18` |
 | Target firmware (64-bit) ⚠️ | `7.06` | `7.18` |
 | Pushes device to ⚠️ | `7.06` | `7.18` |
@@ -861,7 +859,7 @@ No changes detected.
 ## Version Mapping Changes
 
 | Field | v3.1.1 | v3.1.2 |
-|-------|———————|———————|
+|-------|-------|--------|
 | Target firmware (32-bit) ⚠️ | `7.18` | `7.32` |
 | Target firmware (64-bit) ⚠️ | `7.18` | `7.32` |
 | Pushes device to ⚠️ | `7.18` | `7.32` |
