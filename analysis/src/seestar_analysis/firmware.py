@@ -1,11 +1,17 @@
 """
-Extract and analyze firmware packages (iscope_64) embedded in Seestar APKs.
+Extract and analyze firmware packages embedded in Seestar APKs.
 
-Each APK/XAPK ships a bzip2-compressed tar archive at assets/iscope_64 (or
-assets/iscope_64_arm64) containing:
-  - update_package.sh       — the install/update orchestrator
-  - deb-build/asiair_armhf/ — main ASIAIR software tree
-  - others/                 — extra binaries + Seestar_X.X.X.bin (MCU firmware)
+Each APK/XAPK ships bzip2-compressed tar archives as firmware assets:
+
+  assets/iscope          — S50 / armhf (32-bit, Cortex-A7 RV1126)  ← S50 target
+  assets/iscope_64       — ASIAIR aarch64 (64-bit, newer devices)
+  assets/iscope_64_arm64 — same, alternate name
+
+The S50 always uses assets/iscope. assets/iscope_64 is for a different device
+family and contains aarch64 binaries that CANNOT run on the S50's RV1126.
+
+By default this module extracts assets/iscope (S50/armhf). Pass
+device="asiair64" to prefer the 64-bit variant instead.
 """
 
 import zipfile
@@ -35,22 +41,35 @@ class FirmwareInfo:
     notes: list[str] = field(default_factory=list)
 
 
-def _find_asset(zf: zipfile.ZipFile) -> str | None:
-    """Find the iscope firmware asset inside a ZipFile.
-    Prefer 64-bit variants; fall back to 32-bit 'iscope' for older versions."""
-    candidates = [
-        "assets/iscope_64_arm64",
-        "assets/iscope_64",
-        "assets/iscope_64_armeabi_v7a",
-        "assets/iscope",  # older versions (< 2.6.4) use 32-bit
-    ]
+ASSETS_S50 = [
+    "assets/iscope",               # S50 armhf (32-bit) — always correct for S50
+    "assets/iscope_64_armeabi_v7a",
+]
+
+ASSETS_ASIAIR64 = [
+    "assets/iscope_64_arm64",
+    "assets/iscope_64",
+]
+
+
+def _find_asset(zf: zipfile.ZipFile, device: str = "s50") -> str | None:
+    """Find the firmware asset inside a ZipFile for the given device target.
+
+    device="s50"      → prefer assets/iscope (armhf, 32-bit S50 / RV1126)
+    device="asiair64" → prefer assets/iscope_64* (aarch64, 64-bit ASIAIR)
+    """
+    if device == "asiair64":
+        preference = ASSETS_ASIAIR64 + ASSETS_S50
+    else:
+        preference = ASSETS_S50 + ASSETS_ASIAIR64
+
     names = set(zf.namelist())
-    for c in candidates:
+    for c in preference:
         if c in names:
             return c
-    # Fallback: any assets/iscope* entry (exact, not directories)
+    # Fallback: any top-level assets/iscope* entry
     for n in zf.namelist():
-        if n.startswith("assets/iscope") and "/" not in n[len("assets/"):]:
+        if re.match(r"assets/iscope[^/]*$", n):
             return n
     return None
 
@@ -62,19 +81,19 @@ def _open_apk(apk_path: Path) -> zipfile.ZipFile | None:
         return None
 
 
-def _read_asset_bytes(apk_path: Path) -> tuple[bytes, str]:
+def _read_asset_bytes(apk_path: Path, device: str = "s50") -> tuple[bytes, str]:
     """
-    Return (raw_bytes, asset_name) for the iscope_64 asset.
+    Return (raw_bytes, asset_name) for the firmware asset.
     Handles both plain .apk and split XAPK bundles.
 
     XAPK structure: a zip containing multiple APKs:
       - com.zwo.seestar.apk  — main APK (no firmware asset)
-      - asset_pack_0.apk     — contains assets/iscope_64 etc.
+      - asset_pack_0.apk     — contains assets/iscope etc.
       - config.*.apk         — density/ABI splits
     """
     with zipfile.ZipFile(apk_path, 'r') as outer:
         # Plain APK: asset directly inside
-        asset = _find_asset(outer)
+        asset = _find_asset(outer, device)
         if asset:
             return outer.read(asset), asset
 
@@ -84,7 +103,7 @@ def _read_asset_bytes(apk_path: Path) -> tuple[bytes, str]:
             try:
                 inner_bytes = outer.read(apk_name)
                 with zipfile.ZipFile(io.BytesIO(inner_bytes), 'r') as inner:
-                    asset = _find_asset(inner)
+                    asset = _find_asset(inner, device)
                     if asset:
                         return inner.read(asset), asset
             except Exception:
@@ -118,17 +137,22 @@ def _slurp(path: Path, max_lines: int = 60) -> str:
         return ""
 
 
-def analyze_firmware(apk_version: str, apk_path: Path, work_dir: Path) -> FirmwareInfo:
-    """Extract and analyze the iscope_64 firmware bundle from an APK."""
+def analyze_firmware(apk_version: str, apk_path: Path, work_dir: Path,
+                     device: str = "s50") -> FirmwareInfo:
+    """Extract and analyze the firmware bundle from an APK.
+
+    device="s50"      → use assets/iscope (armhf, 32-bit, for S50/RV1126)
+    device="asiair64" → use assets/iscope_64 (aarch64, 64-bit, for ASIAIR)
+    """
     info = FirmwareInfo(apk_version=apk_version)
 
     extract_dir = work_dir / f"fw_{apk_version}"
 
     # Use cached extraction if available
     if not extract_dir.exists() or not any(extract_dir.rglob("*")):
-        raw, asset_name = _read_asset_bytes(apk_path)
+        raw, asset_name = _read_asset_bytes(apk_path, device)
         if not raw:
-            info.notes.append("No iscope_64 asset found in APK")
+            info.notes.append(f"No firmware asset found in APK (device={device})")
             return info
         info.asset_name = asset_name.split('/')[-1]
         ok = _extract_to_dir(raw, extract_dir)
@@ -136,8 +160,7 @@ def analyze_firmware(apk_version: str, apk_path: Path, work_dir: Path) -> Firmwa
             info.notes.append("Failed to extract firmware archive")
             return info
     else:
-        # Try to recover asset name from what we find
-        info.asset_name = "iscope_64 (cached)"
+        info.asset_name = "iscope (cached)"
 
     all_files = sorted(str(f.relative_to(extract_dir)) for f in extract_dir.rglob("*") if f.is_file())
     info.all_files = all_files

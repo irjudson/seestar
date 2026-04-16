@@ -185,8 +185,15 @@ def run_all(seestar_dir, force_decompile):
 @click.argument("version", required=False)
 @click.option("--all", "all_versions", is_flag=True)
 @click.option("--dir", "seestar_dir", default=str(SEESTAR_DIR))
-def analyze_fw(version, all_versions, seestar_dir):
-    """Extract and analyze embedded firmware packages from APK(s)."""
+@click.option("--device", default="s50",
+              type=click.Choice(["s50", "asiair64"]),
+              help="Target device: s50=armhf/32-bit (default), asiair64=aarch64/64-bit")
+def analyze_fw(version, all_versions, seestar_dir, device):
+    """Extract and analyze embedded firmware packages from APK(s).
+
+    Uses assets/iscope (armhf, 32-bit) for --device s50 (default).
+    Use --device asiair64 for the 64-bit ASIAIR variant.
+    """
     apks = find_apks(Path(seestar_dir))
     work_dir = OUTPUT_DIR / "_fw_work"
 
@@ -204,7 +211,7 @@ def analyze_fw(version, all_versions, seestar_dir):
     for ver, path in targets:
         console.print(f"\n[cyan]Extracting firmware from v{ver}...[/cyan]")
         try:
-            info = analyze_firmware(ver, path, work_dir)
+            info = analyze_firmware(ver, path, work_dir, device=device)
             save_firmware_data(info, OUTPUT_DIR / f"v{ver}")
             report = render_firmware_report(info)
             rpt_path = OUTPUT_DIR / f"v{ver}" / "firmware_report.md"
