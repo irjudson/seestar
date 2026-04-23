@@ -5,6 +5,15 @@ reverse-engineering, firmware extraction/diff/patching, license generation,
 recovery workflows, and — now-resolved — the Wi-Fi chip wedge that affects
 a cohort of units upgrading past app 5.82.
 
+> **Disclaimer.** This project is not affiliated with, endorsed by, or
+> sponsored by ZWO. It is independent reverse-engineering and repair
+> tooling developed on a personally-owned device. The bcmdhd kernel
+> module whose behaviour is discussed here is GPL-licensed. Using any
+> of the tools or patches described may void your device warranty and
+> could change how the device interacts with future official updates.
+> Use at your own risk. See [CONTRIBUTING.md](CONTRIBUTING.md) to report
+> additional affected units or contribute test data.
+
 ## Canonical docs
 
 - **[SEESTAR_WIFI_WEDGE_FIX.md](SEESTAR_WIFI_WEDGE_FIX.md)** — user-facing
@@ -16,7 +25,7 @@ a cohort of units upgrading past app 5.82.
   investigation log (`[V]` verified / `[I]` inferred / `[?]` open tags).
   Historical record of every hypothesis we explored, most of which were
   refuted.
-- **[MEMENTO.md](MEMENTO.md)** — short orientation card.
+- **[HACKING.md](HACKING.md)** — short orientation card.
 
 ## Status (2026-04-22)
 
@@ -66,19 +75,34 @@ ssh pi@169.254.100.100 'sudo /home/pi/post_upgrade_swap.sh'
 ## Repo layout
 
 ```
-firmware/packages/fw_*        Extracted ZWO firmware bundles (.gitignored)
-firmware/decompiled/          jadx-decompiled APKs (.gitignored)
-firmware/signed/              Pre-signed iscope files (.gitignored)
-firmware/factory/             Extracted factory Jul 2023 bcmdhd.ko
-firmware/experimental/        Built artifacts, e.g. the mmc-patched driver
-baseline-2.42/                Factory seestarOS.img for rkdeveloptool recovery
-s50-fs/                       Reference device filesystem snapshot (.gitignored)
 tools/                        Active CLI utilities (see table below)
 tools/lib/common.sh           Shared constants + SSH helpers for tool scripts
 tools/desktop-setup/          Host-side udev rules for USB-ethernet auto-config
-analysis/                     Binary diffs, snapshots, dmesg captures
-seestar-api/MOVED.md          Pointer — client library moved to its own repo
-apks/                         Seestar APK archive (.gitignored)
+analysis/output/              Written investigation reports (markdown)
+analysis/driver_diff/         Symbol/string diffs between the two bcmdhd builds
+analysis/ghidra_diff/scripts/ Our Ghidra scripts (ZWO binaries themselves are not shipped)
+analysis/src/                 Analysis tooling (APK downloader, etc.)
+```
+
+The Python client library has moved to its own repo:
+**https://github.com/irjudson/seestar-api**
+
+The following paths are **not included** in this repo (gitignored); the
+tools regenerate or extract what they need on demand:
+
+```
+firmware/packages/            ZWO firmware bundles — copyright ZWO
+firmware/decompiled/          jadx output of ZWO APKs — copyright ZWO
+firmware/signed/              Pre-signed iscope files
+firmware/factory/             Extracted factory driver (re-extract via tools/extract_factory_bcmdhd.sh)
+firmware/experimental/        Built artifacts (patched .ko — rebuild per SEESTAR_WIFI_WEDGE_FIX.md)
+baseline-2.42/seestarOS.img   Factory image for rkdeveloptool recovery
+s50-fs/                       Your device filesystem snapshot
+apks/                         ZWO APK archive — copyright ZWO
+analysis/jadx/                Decompiled APK contents — copyright ZWO
+analysis/ghidra_diff/binaries Extracted ZWO binaries
+analysis/ghidra_diff/out*/    Ghidra decompilation output
+analysis/fw_5.82_failure_dmesg/ Device-specific capture (contains ZWO binaries too)
 ```
 
 The Python client library lives at [github.com/irjudson/seestar-api](https://github.com/irjudson/seestar-api).

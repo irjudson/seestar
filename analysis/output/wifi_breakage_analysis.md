@@ -1,3 +1,5 @@
+> **SUPERSEDED.** This document was written during the 2026-04 investigation when several root-cause hypotheses were still live. The final, confirmed cause and fix are documented in [`SEESTAR_WIFI_WEDGE_FIX.md`](../../SEESTAR_WIFI_WEDGE_FIX.md) and [`UPGRADE_PROCEDURE_VERIFIED.md`](../../UPGRADE_PROCEDURE_VERIFIED.md). Preserved here as a snapshot of the investigation, not a current description of the bug or fix.
+
 # Seestar S50 WiFi Breakage Root Cause Analysis
 
 **Date:** 2026-04-15 (revised x4)
