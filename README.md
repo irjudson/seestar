@@ -34,16 +34,16 @@ version from 5.50 (fw_2.6.1) to 7.32 (fw_3.1.2).
 
 | Question | Answer |
 |---|---|
-| What's broken? | Oct 2025 rebuild of `bcmdhd.ko` imports `mmc_hw_reset`; affected boards' DTB (`dwmmc@ffc70000`) lacks `cap-mmc-hw-reset`, so chip init hangs at `HT Avail timeout (clkctl 0x50)`. |
+| What's broken? | Oct 2025 rebuild of `bcmdhd.ko` imports `mmc_hw_reset`. The RV1126 dwmmc controller on the S50 doesn't advertise `cap-mmc-hw-reset`, and on a subset of chips the resulting behaviour leaves the SDIO bus wedged at `HT Avail timeout (clkctl 0x50)`. Why only some S50s wedge is still unresolved — the DTB state is identical across working and broken units. |
 | What's the fix? | `objcopy --redefine-sym mmc_hw_reset=mmc_sw_reset` on the driver — one-symbol ELF patch, no kernel rebuild. |
-| How do I know if my S50 is affected? | `./tools/check_if_affected.sh --ip <seestar-ip>` |
+| How do I diagnose my S50? | `./tools/wifi-driver-check.sh --ip <seestar-ip>` |
 | How do I fix my unit? | `./tools/swap_driver.sh patched --ip <seestar-ip>` |
 
 ## Quick-start (affected device)
 
 ```bash
-# 1. Is this unit affected?
-./tools/check_if_affected.sh --ip 169.254.100.100
+# 1. What's running on this unit, and is it wedged?
+./tools/wifi-driver-check.sh --ip 169.254.100.100
 
 # 2. Install the patched driver
 ./tools/swap_driver.sh patched --ip 169.254.100.100
@@ -113,7 +113,7 @@ The Python client library lives at [github.com/irjudson/seestar-api](https://git
 
 | Tool | Purpose |
 |---|---|
-| `check_if_affected.sh` | Detect whether this unit's DTB is missing `cap-mmc-hw-reset` |
+| `wifi-driver-check.sh` | Fingerprint bcmdhd.ko + scan dmesg; emit `FACTORY_SAFE` / `PATCHED_SAFE` / `WEDGED_NOW` / `REGRESSED_AT_RISK` / `UNKNOWN_DRIVER` verdict |
 | `swap_driver.sh <factory\|patched>` | Install a known-good driver variant and reboot |
 | `prepare_for_upgrade.sh [--to factory\|patched]` | Stage driver + post-upgrade recovery script before pushing firmware |
 | `verify_functional.sh` | 9-point health check (driver classification, chip state, AP, hostapd, station, imager, sound-33, RPC ports) |

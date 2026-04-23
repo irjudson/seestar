@@ -6,18 +6,30 @@
 > (replayable upgrade procedure). Preserved here as the historical record
 > of the hypotheses considered (and mostly refuted) during the investigation.
 
-## Final conclusion (2026-04-22)
+## Final conclusion (2026-04-22, amended 2026-04-23)
 
-The 5.82+ chip wedge has a **single** root cause: the Oct 17 2025 rebuild
-of `bcmdhd.ko` (md5 `8b75e5cd…`) imports `mmc_hw_reset` where the
-July 2023 factory driver (md5 `4cfbf203…`) imports `mmc_sw_reset`. On
-boards whose DTB node `dwmmc@ffc70000` lacks the `cap-mmc-hw-reset`
-property, the mmc subsystem returns `-EOPNOTSUPP` and the SDIO bus
-is left in a state where the chip never grants HT clock.
+The 5.82+ chip wedge traces to the Oct 17 2025 rebuild of `bcmdhd.ko`
+(md5 `8b75e5cd…`), which imports `mmc_hw_reset` where the July 2023
+factory driver (md5 `4cfbf203…`) imports `mmc_sw_reset`. On this
+unit's SDIO bus, the `mmc_hw_reset` call leaves the chip unable to
+grant HT clock, and chip init hangs at `HT Avail timeout (clkctl
+0x50)`.
 
 A one-symbol ELF patch (`objcopy --redefine-sym mmc_hw_reset=mmc_sw_reset`)
 on the Oct 2025 driver produces md5 `1fc70c15…`, which is verified
 functional on this unit across every firmware from 5.50 to 7.32.
+
+**Amendment (2026-04-23):** initially we believed the DTB state
+(`dwmmc@ffc70000` missing `cap-mmc-hw-reset`) was the cohort
+differentiator — i.e., only DTBs lacking the property would be
+affected. Field reports from other S50 owners then showed two working
+units on the Oct 2025 driver whose DTBs *also* lack the property.
+Every S50 sampled so far has the identical DTB state, working and
+broken alike. So the DT absence is a necessary-but-not-sufficient
+condition; the per-unit gate for whether `mmc_hw_reset` actually
+wedges the chip is still open (chip stepping / SDIO timing / board
+revision are plausible, none confirmed). The patched driver side-steps
+the question by not calling `mmc_hw_reset` at all.
 
 All other hypotheses in this document — NVRAM differences, chip OTP
 programming, hostapd/wpa_supplicant regressions, bluetooth.sh rfkill
@@ -75,12 +87,14 @@ Both drivers report the same upstream DHD version string `101.10.361.29 (wlan=r8
 
 ### Known unknown [?]
 
-Why normal S50 users don't hit this wedge despite receiving the same Oct 2025 driver through official APK upgrade is unexplained. Confirmed facts:
+Why some S50 users don't hit this wedge despite receiving the same
+Oct 2025 driver is still open. Confirmed facts:
 - **[V]** APKs v2.6.4 through v3.1.2 all bundle the Oct 2025 driver (md5 `8b75e5cd…`) as `assets/iscope`
 - **[V]** APKs don't download iscope from network at runtime — bundled only
 - **[V]** api.seestar.com endpoints hit by the APK are only `/v1/activation` (license) and `/v1/audio-package/audio/version` (sound files), NOT firmware
 - **[V]** No firmware package from fw_2.2.0 through fw_3.1.2 updates S50 kernel, DTB, bootloader, or recovery partitions (only S30/S30P models do via `update_img` + `updateEngine`)
-- **[I]** Most likely: production S50 units ship with a different factory `seestarOS.img` than our `3731a279` donor. The production image's kernel/DTB may tolerate the Oct 2025 driver where our donor's doesn't. Not verifiable without access to another unit's factory image.
+- **[V, 2026-04-23]** The DTB property `cap-mmc-hw-reset` is absent on every S50 we have data for, working or broken. So the DTB cannot be the differentiator — ruling out the earlier "production image has a different DTB" hypothesis.
+- **[?]** Remaining candidates: chip stepping / silicon revision, per-PCB SDIO timing (e.g., drive strength, pull values), or a boot-time race that only manifests on some boards. None confirmed. A third working unit agreeing to run `./tools/wifi-driver-check.sh` and share `boardrev` + silicon id would narrow this quickly.
 
 ---
 

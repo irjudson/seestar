@@ -16,11 +16,12 @@ devices, and there's a clean fix you can apply yourself over USB.
   interprets this as a fault and enters the "sound-33" (`en33.wav`)
   recovery loop.
 - **Root cause**: the Oct 2025 driver calls `mmc_hw_reset()` on the SDIO
-  bus. On affected boards the device-tree node (`dwmmc@ffc70000`) is
-  missing the `cap-mmc-hw-reset` property, so that call returns
-  `-EOPNOTSUPP` and leaves the bus in an unrecoverable state. The
-  **July 2023 factory driver** uses `mmc_sw_reset()` instead — always
-  works.
+  bus. The RV1126 dwmmc controller on the S50 does not advertise
+  `cap-mmc-hw-reset` in its DTB node (`dwmmc@ffc70000`). On this
+  cohort of chips the `mmc_hw_reset` call leaves the SDIO bus in a
+  state where the chip never grants HT clock. The **July 2023 factory
+  driver** uses `mmc_sw_reset()` instead — works reliably on the same
+  hardware.
 - **Fix**: patch one symbol in the driver. A 1-byte-logical change made
   with `objcopy --redefine-sym`. No kernel rebuild, no reflash, no loss
   of settings.
@@ -28,21 +29,47 @@ devices, and there's a clean fix you can apply yourself over USB.
 Affected units are fully recoverable and, once fixed, survive every
 subsequent ZWO firmware push indefinitely.
 
-## Check if you're affected (10 seconds)
+## Not every S50 on Oct 2025 driver wedges
+
+Field reports from other owners show units running the Oct 2025 driver
+*without* wedging. Both working and broken units share the same DTB
+state (`cap-mmc-hw-reset` absent on every S50 sampled). So whatever
+tips a particular chip into the HT Avail failure mode is not purely
+the DT property; something else — chip revision, SDIO timing on that
+specific board, or conditions at the moment chip init runs — gates
+whether the bad `mmc_hw_reset` call actually wedges it.
+
+The patched driver (which skips the `mmc_hw_reset` call entirely) works
+on every unit we have data for, broken or not. It is the safer option
+if you intend to upgrade past 5.82.
+
+## Check if you're affected
 
 With the S50 reachable over USB-ethernet (typically `169.254.100.100`)
 or WiFi:
 
 ```bash
-ssh pi@<your-seestar-ip> 'ls /proc/device-tree/dwmmc@ffc70000/ | grep hw-reset || echo AFFECTED'
+./tools/wifi-driver-check.sh --ip <your-seestar-ip>
 ```
 
-- If it prints `cap-mmc-hw-reset`: **you're not affected.** The Oct 2025
-  driver works for you; stop reading.
-- If it prints `AFFECTED`: you're in the cohort. Keep reading.
+The last line of output is a single-word verdict:
 
-You can also infer affected from the symptom: **any upgrade past app 5.82
-produces the sound-33 beep loop, blinking red LED, or AP not broadcasting.**
+| Verdict | Meaning |
+|---|---|
+| `FACTORY_SAFE` | Jul 2023 factory driver installed — pre-regression; safe until the next firmware push overwrites it |
+| `PATCHED_SAFE` | Oct 2025 driver with the `mmc_sw_reset` patch already applied — safe |
+| `WEDGED_NOW` | Stock Oct 2025 driver + HT Avail timeouts in dmesg — chip is wedged right now; apply the fix below |
+| `REGRESSED_AT_RISK` | Stock Oct 2025 driver, no wedge this boot — may or may not be safe; if you want certainty, apply the fix |
+| `UNKNOWN_DRIVER` | md5 doesn't match any known fingerprint — probably a future ZWO build we haven't catalogued |
+
+You can also infer a wedged unit from the symptom: **sound-33 beep loop,
+blinking red LED, or AP not broadcasting after upgrading past 5.82.**
+
+> A previous version of this writeup used a one-liner that checked
+> `/proc/device-tree/dwmmc@ffc70000/` for `cap-mmc-hw-reset`. That test
+> flagged every S50 as affected, including units that work fine, so it
+> has been withdrawn. The driver + dmesg check above is the current
+> recommended diagnostic.
 
 ## How the fix works
 
@@ -207,9 +234,11 @@ this writeup, but doable, and there are open-source tools for it.
   (they've remote-remediated for some users). But every shipping
   firmware release, including the latest 7.32 / fw_3.1.2, still contains
   the broken driver.
-- **Not a kernel-level fix.** You could add `cap-mmc-hw-reset` to the
-  DTB and rebuild / reflash, but that's much more invasive and requires
-  kernel source access.
+- **Not a DTB-level fix.** Adding `cap-mmc-hw-reset` to the DTB was
+  our first hypothesis for a "proper" fix, but since field data shows
+  the same DTB state on working S50s we no longer expect that edit
+  alone would help, and it would require rebuild/reflash of a partition
+  that no ZWO firmware update touches.
 - **Not a NVRAM / Broadcom OTP issue.** Those hypotheses came up during
   the investigation and were all refuted. A friend's working production
   S50 has the byte-identical `nvram_ap6256.txt`, so NVRAM isn't the
@@ -226,11 +255,20 @@ confirmed:
    July 2023 and October 2025 builds.
 2. The `nvram_ap6256.txt` shipped on every affected device is the
    unchanged upstream `AP6256_NVRAM_V1.4_06112021` (md5 `b7772771...`).
-3. The sole functional regression is the `mmc_hw_reset` import, and
-   the sole determining factor for whether a device is affected is
-   the DTB's missing `cap-mmc-hw-reset` property.
+3. The functional regression between the two builds is the
+   `mmc_hw_reset` vs `mmc_sw_reset` import. Neutralising that one
+   import (via `objcopy --redefine-sym`) is sufficient to restore
+   correct behavior on every affected unit tested.
+
+What is *not* established: exactly which S50 units are susceptible.
+The DTB state is identical across working and broken S50s we have
+data for, so the missing `cap-mmc-hw-reset` property is at best a
+necessary condition, not a sufficient one. Board revision, chip
+stepping, or SDIO bus timing on a specific PCB are the most likely
+remaining suspects.
 
 Patched driver md5: `1fc70c15691fa675fa3e4661aa783a12`.
 
-If you find more affected units and want to correlate by serial,
-boardrev, or ship date, the detection one-liner above is your friend.
+If you find more S50 data points (working or broken), the verdict
+line printed by `./tools/wifi-driver-check.sh` plus `dmesg | grep
+boardrev` is enough to correlate.

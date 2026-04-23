@@ -18,26 +18,29 @@ documented in [SEESTAR_WIFI_WEDGE_FIX.md](SEESTAR_WIFI_WEDGE_FIX.md).
 
 ### 1. Affected-unit data points
 
-If you have an S50 and run `./tools/check_if_affected.sh`, please file
+If you have an S50 and run `./tools/wifi-driver-check.sh`, please file
 an issue with:
 
-- `AFFECTED` / `NOT AFFECTED` verdict
+- Verdict line (`FACTORY_SAFE` / `PATCHED_SAFE` / `WEDGED_NOW` /
+  `REGRESSED_AT_RISK` / `UNKNOWN_DRIVER`)
 - Device serial (last 8 of `Serial:` from `/proc/cpuinfo` — publicly
   visible in your AP SSID anyway)
 - Board revision (from `sudo dmesg | grep boardrev` — e.g. `P304`)
 - Current ZWO firmware version (`version_string` from `/home/pi/ASIAIR/config`)
 - Approximate ship date, if you know it
 
-This helps narrow down which units are in the affected cohort and lets
-us eventually point at a serial/date range for owners who haven't
-looked yet.
+The cohort differentiator is still open (see UPGRADE_PROBLEM_SUMMARY.md);
+`REGRESSED_AT_RISK` reports — units running the stock Oct 2025 driver
+*without* wedging — are particularly valuable for narrowing down which
+boards are actually susceptible.
 
 ### 2. Confirm the fix works on your unit
 
 If you applied the patched driver (via `./tools/swap_driver.sh patched`
 or the manual `objcopy` path documented in SEESTAR_WIFI_WEDGE_FIX.md),
-let us know whether `./tools/verify_functional.sh` returns all green.
-Negative results are just as valuable as positive ones.
+let us know whether `./tools/verify_functional.sh` returns all green
+and `./tools/wifi-driver-check.sh` prints `PATCHED_SAFE`. Negative
+results are just as valuable as positive ones.
 
 ### 3. Tool bugs / improvements
 

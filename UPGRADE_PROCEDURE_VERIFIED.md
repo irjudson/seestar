@@ -6,7 +6,7 @@ Companion docs:
 - [SEESTAR_WIFI_WEDGE_FIX.md](SEESTAR_WIFI_WEDGE_FIX.md) — user-facing writeup for other S50 owners
 - [UPGRADE_PROBLEM_SUMMARY.md](UPGRADE_PROBLEM_SUMMARY.md) — historical investigation log
 
-This doc is the **replayable procedure** for any affected unit. Detection is via `./tools/check_if_affected.sh`.
+This doc is the **replayable procedure** for any affected unit. Detection is via `./tools/wifi-driver-check.sh`.
 
 Each claim is tagged:
 - **[V]** Verified this session — produced by a direct command run on the device
@@ -18,7 +18,7 @@ Each claim is tagged:
 ## Executive summary
 
 - **[V]** The stock Oct 2025 `bcmdhd.ko` (md5 `8b75e5cd33fcf850dd673129d1842312`) wedges affected units with `HT Avail timeout (clkctl 0x50)`. It ships in every firmware package from fw_2.2.0 through fw_3.1.2.
-- **[V]** Root cause: the stock Oct 2025 driver imports `mmc_hw_reset`; affected boards' DTB (`dwmmc@ffc70000`) lacks `cap-mmc-hw-reset`, so the reset call returns `-EOPNOTSUPP` leaving the SDIO bus in a state where the chip never grants HT clock.
+- **[V]** Root cause: the stock Oct 2025 driver imports `mmc_hw_reset` where the factory driver imports `mmc_sw_reset`. On this chip the `mmc_hw_reset` call leaves the SDIO bus in a state where the chip never grants HT clock. The DTB node `dwmmc@ffc70000` lacks `cap-mmc-hw-reset` — but per field data from 2026-04-23, this is true of every S50 DTB sampled, including working units, so it's a necessary-but-not-sufficient condition and is **not** usable as a per-unit screening test.
 - **[V]** **Two verified-good driver alternatives**:
   - **Jul 2023 factory** (md5 `4cfbf203772770d246db12505b744003`, extracted from `baseline-2.42/seestarOS.img` partition 6) — pre-regression driver, uses `mmc_sw_reset`.
   - **Patched Oct 2025** (md5 `1fc70c15691fa675fa3e4661aa783a12`) — Oct 2025 driver with one-symbol `objcopy --redefine-sym mmc_hw_reset=mmc_sw_reset`. Otherwise byte-identical to stock.
@@ -54,7 +54,7 @@ The iscope payload location inside the APK varies. 3.0.0 uses `asset_pack_0.apk/
 
 | Tool | Purpose | Verified |
 |---|---|---|
-| `check_if_affected.sh` | Detect whether this unit's DTB is missing `cap-mmc-hw-reset` | [V] correctly classifies our prototype as AFFECTED |
+| `wifi-driver-check.sh` | Fingerprint on-device bcmdhd.ko (md5 vs known-good table) + scan dmesg for `HT Avail timeout`. Emits one-word verdict: `FACTORY_SAFE` / `PATCHED_SAFE` / `WEDGED_NOW` / `REGRESSED_AT_RISK` / `UNKNOWN_DRIVER`. | [V] classifies this prototype as `WEDGED_NOW` on stock Oct 2025 driver, `FACTORY_SAFE` after swap |
 | `extract_factory_bcmdhd.sh` | Loop-mount `baseline-2.42/seestarOS.img` partition 6; extract `bcmdhd.ko` → `firmware/factory/bcmdhd.ko.jul2023` | [V] md5 `4cfbf203` |
 | `swap_driver.sh <factory\|patched>` | Install a known-good driver variant, backup current, depmod, reboot | [V] both modes verified on 5.82, 6.45, 6.70, 7.32 |
 | `audit_bcmdhd_across_versions.sh` | Tabulate bcmdhd.ko md5 + compile date across every fw package | [V] confirms all fw_2.2.0+ ship the Oct 2025 rebuild |
@@ -113,7 +113,7 @@ fw_3.0.0+ `network.sh` has a new block that forces `wl country CN` during a wpa_
 
 ## Resolved questions (2026-04-22)
 
-- **[V]** Why does this chip wedge on Oct 2025 `bcmdhd.ko` while production units don't? — The Oct 2025 driver imports `mmc_hw_reset`; our DTB node `dwmmc@ffc70000` is missing the `cap-mmc-hw-reset` property, so mmc_hw_reset returns `-EOPNOTSUPP`. Production units' DTBs have the property (most likely — friend's working S50 almost certainly does, confirmed indirectly by the fact that the stock driver works on his unit).
+- **[V]** Why does this chip wedge on Oct 2025 `bcmdhd.ko` while some production units don't? — Partially resolved: the Oct 2025 driver imports `mmc_hw_reset` where the factory driver imports `mmc_sw_reset`, and on this chip the `mmc_hw_reset` call wedges the SDIO bus. **Not** explained by DTB state: per 2026-04-23 field reports, working and broken S50s alike lack `cap-mmc-hw-reset` at `dwmmc@ffc70000`. Whatever gates which chips wedge is still open; chip stepping or per-PCB SDIO timing are the leading candidates.
 - **[V]** Would a binary patch work? — Yes: `objcopy --redefine-sym mmc_hw_reset=mmc_sw_reset` on the Oct 2025 driver produces a fully-functional variant (md5 `1fc70c15...`). See `firmware/experimental/bcmdhd.ko.oct2025_mmc_sw_patched`.
 - **[REFUTED]** Chip OTP programming as the difference between prototype and production — driver's OTP/CIS code is byte-identical between Jul 2023 and Oct 2025 builds; NVRAM file is byte-identical between prototype and a working friend's production unit.
 - **[?]** Is the `iscope` payload signed with a key that the device validates via `app_publickey.pem` in `/home/pi/ASIAIR/`, or is the signature check optional? All pushes in this session succeeded with the existing signing flow (private key in `tools/seestar_firmware_flash.py`), so the key is accepted by every shipping firmware version.
