@@ -74,7 +74,7 @@ This sets:
 - `ccode=US` — so `wl country US` runs at boot in 5.84/5.93 (not relevant for 6.45 but harmless)
 - `channel=36` in AP_5G.conf — **NOT 0** (see below)
 - `wlan0.conf → AP_5G.conf` symlink
-- wpa_supplicant.conf: Buffalo Jump Ranch only, country=US
+- wpa_supplicant.conf: your home WiFi only, country=US
 - Removes stale xml/json/txt files from .ZWO/ **except ASIAIR_general.xml** (see below)
 - Writes `ASIAIR_general.xml` with `ap_id_inited=true`
 - Copies correct license file
@@ -154,7 +154,7 @@ After this, the device will be in station mode with ACS enabled for Same Channel
 Expected:
 - `firmware version: 6.45`
 - `wpa_svr: wpa_svr=1`
-- `wpa networks: "Buffalo Jump Ranch"`
+- `wpa networks: "<your home SSID>"`
 - Device reachable at home network IP
 
 ---

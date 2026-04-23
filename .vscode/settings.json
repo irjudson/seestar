@@ -1,0 +1,21 @@
+{
+  "files.watcherExclude": {
+    "**/baseline-2.42/**": true,
+    "**/apks/**": true,
+    "**/firmware/**": true,
+    "**/s50-fs/**": true,
+    "**/.git/objects/**": true,
+    "**/node_modules/**": true
+  },
+  "files.exclude": {
+    "**/baseline-2.42": false,
+    "**/apks": false
+  },
+  "search.exclude": {
+    "**/baseline-2.42": true,
+    "**/apks": true,
+    "**/firmware/packages": true,
+    "**/s50-fs": true
+  },
+  "search.followSymlinks": false
+}

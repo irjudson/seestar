@@ -223,7 +223,7 @@ Your S50 uses the IMX585 sensor (based on s50-fs analysis).
 | Any → 7.32 | **Bricked this device** — avoid until root cause known | Stop at 7.18 |
 
 **Recommended upgrade path from base image (2.42):**
-1. Run `seestar-recovery.sh --pre-upgrade` (sets `wpa_svr=0`, `ccode=US`, Buffalo Jump Ranch only)
+1. Run `seestar-recovery.sh --pre-upgrade` (sets `wpa_svr=0`, `ccode=US`, your home WiFi only)
 2. Push fw_3.0.0 (deb 6.45) directly via your firmware tool
 3. Run `seestar-recovery.sh` to verify state
 4. Configure home WiFi through app (restores `wpa_svr=1` via `network.sh wpa_svr 1`)

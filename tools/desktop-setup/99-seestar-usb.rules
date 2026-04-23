@@ -1,0 +1,16 @@
+# Auto-configure the Seestar RNDIS/Ethernet Gadget when it enumerates.
+#
+# Matches the g_ether gadget's fixed vendor:product (0525:a4a2) — MAC is
+# randomized each boot so we can't match on MAC, but vendor:product is stable.
+#
+# Install:
+#   sudo cp 99-seestar-usb.rules /etc/udev/rules.d/
+#   sudo cp seestar-usb-up /usr/local/bin/
+#   sudo chmod +x /usr/local/bin/seestar-usb-up
+#   sudo udevadm control --reload-rules
+#
+# Reverse:
+#   sudo rm /etc/udev/rules.d/99-seestar-usb.rules /usr/local/bin/seestar-usb-up
+#   sudo udevadm control --reload-rules
+
+SUBSYSTEM=="net", ACTION=="add", ATTRS{idVendor}=="0525", ATTRS{idProduct}=="a4a2", RUN+="/usr/local/bin/seestar-usb-up %k"

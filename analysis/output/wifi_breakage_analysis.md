@@ -45,7 +45,7 @@ autochannel_enabled=0
 ```
 network={ ssid="Xiaomi168" ... }       ← 2.4GHz, different band from AP
 network={ ssid="ZWO-FACTORY-5G" ... }  ← 5GHz, unknown channel
-network={ ssid="Buffalo Jump Ranch" ... } ← user's home network
+network={ ssid="<your home SSID>" ... } ← user's home network
 ```
 
 `sh_conf.txt`:
@@ -239,7 +239,7 @@ to the device AP (`10.0.0.1`) or home network (`--ip <addr>`):
 ```
 ./seestar-recovery.sh                    # show current state
 ./seestar-recovery.sh --pre-upgrade      # set wpa_svr=0, ccode=US, channel=36 (NOT 0),
-                                         # Buffalo Jump Ranch only, remove stale configs,
+                                         # your home WiFi only, remove stale configs,
                                          # preserve ASIAIR_general.xml with ap_id_inited=true
 ./seestar-recovery.sh --apply            # same but wpa_svr=1, channel=0 (after upgrade)
 ./seestar-recovery.sh --restore          # restore from backup

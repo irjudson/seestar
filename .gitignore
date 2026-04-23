@@ -33,3 +33,26 @@ build/
 # Editor
 .DS_Store
 *.swp
+
+# Experimental / scratch tools (rebuild from docs if needed)
+tools/experimental/
+tools/custom_firmware/
+tools/dhdutil/
+
+# Device-driver binaries — users extract their own via tools/extract_factory_bcmdhd.sh
+# or rebuild the patched one via the objcopy command in SEESTAR_WIFI_WEDGE_FIX.md.
+firmware/factory/
+firmware/experimental/
+
+# Per-run snapshot dirs (prepare_for_upgrade.sh output)
+analysis/pre_*_snapshot_*/
+
+# ZWO-copyrighted analysis artifacts (decompiled APKs, extracted binaries,
+# ghidra decompilation outputs). The scripts and our written reports are
+# checked in; the raw ZWO-derived material is not.
+analysis/jadx/
+analysis/ghidra_diff/binaries/
+analysis/ghidra_diff/out/
+analysis/ghidra_diff/out_ids/
+analysis/ghidra_diff/proj/
+analysis/fw_5.82_failure_dmesg/

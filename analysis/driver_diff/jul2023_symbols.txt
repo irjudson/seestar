@@ -1,0 +1,5 @@
+dhd_bus_init
+dhd_preinit_ioctls
+nvram_path
+wl_init_prof
+wl_init_scan

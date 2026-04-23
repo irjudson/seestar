@@ -87,6 +87,231 @@ def sign_challenge(challenge_str: str, private_key_pem: bytes) -> str:
     return base64.b64encode(signature).decode("utf-8")
 
 
+# Minimum firmware_ver_int that implements the set_wifi_country JSON-RPC
+# handler on the device. Introduced in fw_2.6.4 (app 5.82).
+SET_WIFI_COUNTRY_MIN_FW = 2582
+
+
+def post_upgrade_set_wifi_country(host: str, country: str = "US", port: int = 4700,
+                                   max_wait: int = 360,
+                                   pre_upgrade_fw: Optional[int] = None) -> bool:
+    """
+    After a firmware upgrade, poll port 4700 and wait for the device to reboot.
+    Detect reboot by firmware_ver_int CHANGE (not threshold), so this works for
+    any upgrade path. Once rebooted, if the NEW firmware supports set_wifi_country
+    (>= fw_2.6.4 / 2582), send the JSON-RPC that mirrors the vendor APK's BLE
+    ble_connect wifi_country field. Server-side handler invokes network.sh
+    country <CC> → reload_country(<CC>): stop hostapd → ccode=<CC> in sh_conf.txt
+    → wl country <CC> → autochannel_enabled=1 in AP_*.conf → start hostapd.
+
+    If the new firmware is < 2582 (e.g. upgrading 2.42 → 5.50), the handler
+    doesn't exist, so we skip the RPC and just report the reboot is complete.
+
+    Polling starts IMMEDIATELY (no blind timer). Returns True on success
+    (reboot seen + either RPC accepted OR skipped for old firmware).
+    """
+    import time
+
+    print(f"\n{'='*70}")
+    print(f"POST-UPGRADE: waiting for reboot + set_wifi_country if new fw supports it")
+    print(f"{'='*70}")
+    if pre_upgrade_fw is not None:
+        print(f"Pre-upgrade firmware_ver_int: {pre_upgrade_fw}")
+    print(f"Polling {host}:{port} for firmware_ver_int change (up to {max_wait}s)...")
+
+    deadline = time.time() + max_wait
+    poll_interval = 2
+    heartbeat_every = 15  # seconds
+    polls = 0
+    last_seen_fw = pre_upgrade_fw
+    last_err = None
+    new_fw_int = None
+    started = time.time()
+    last_heartbeat = started
+    # Log that we observed the old firmware at start so the user sees something.
+    if pre_upgrade_fw is not None:
+        print(f"  [  0s] firmware still {pre_upgrade_fw} (pre-upgrade) — waiting for reboot")
+    while time.time() < deadline:
+        polls += 1
+        sock = None
+        status = "unreachable"
+        fw_int = None
+        fw_str = None
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(3)
+            sock.connect((host, port))
+            version_event = read_initial_version(sock, timeout=2.0)
+            sock.close()
+            if version_event is not None:
+                fw_int = version_event.get("firmware_ver_int", 0)
+                fw_str = version_event.get("firmware_ver_string", "?")
+                status = f"firmware={fw_str} ({fw_int})"
+                if fw_int != last_seen_fw:
+                    elapsed = int(time.time() - started)
+                    print(f"  [{elapsed:3d}s] {status} — CHANGED from {last_seen_fw}")
+                    last_seen_fw = fw_int
+                if pre_upgrade_fw is None or fw_int != pre_upgrade_fw:
+                    elapsed = int(time.time() - started)
+                    print(f"[+] Reboot into new firmware confirmed after {elapsed}s ({polls} polls)")
+                    new_fw_int = fw_int
+                    break
+            else:
+                status = "TCP ok but no Version event"
+        except Exception as e:
+            last_err = e
+            if sock:
+                try: sock.close()
+                except: pass
+
+        # Heartbeat so user sees polling is alive even when fw hasn't changed.
+        if time.time() - last_heartbeat >= heartbeat_every:
+            elapsed = int(time.time() - started)
+            print(f"  [{elapsed:3d}s] polls={polls} status={status}")
+            last_heartbeat = time.time()
+
+        time.sleep(poll_interval)
+
+    if new_fw_int is None:
+        print(f"[!] Did not observe firmware_ver_int change within {max_wait}s")
+        print(f"    Last seen firmware_ver_int: {last_seen_fw}, last error: {last_err}")
+        print(f"[!] If sound-33 'WiFi abnormal' fired, do NOT 3s-reset.")
+        return False
+
+    # Decide whether to send set_wifi_country based on the NEW firmware version.
+    if new_fw_int < SET_WIFI_COUNTRY_MIN_FW:
+        print(f"[+] New firmware ({new_fw_int}) < {SET_WIFI_COUNTRY_MIN_FW} — set_wifi_country")
+        print(f"    handler not present. Skipping RPC; upgrade complete.")
+        return True
+    else:
+        print(f"[!] Device did not come back in {max_wait}s (last error: {last_err})")
+        print(f"[!] If sound-33 'WiFi abnormal' fired, do NOT 3s-reset.")
+        print(f"[!] Try manually once reachable:  python3 tools/set_wifi_country.py --host {host}")
+        return False
+
+    # Brief grace period to let zwoair_imager finish init (port 4700 listener
+    # may accept the TCP connection before the JSON-RPC handler is ready).
+    print(f"[*] 3s grace for zwoair_imager to finish startup...")
+    time.sleep(3)
+
+    # Send set_wifi_country JSON-RPC.
+    print(f"[*] sending set_wifi_country(country={country})...")
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(10)
+        sock.connect((host, port))
+
+        # Drain the initial Version event so it doesn't clobber our response.
+        sock.settimeout(2)
+        try:
+            initial = sock.recv(4096)
+            for line in initial.decode("utf-8", errors="replace").split("\n"):
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    parsed = json.loads(line)
+                    if parsed.get("Event") == "Version":
+                        print(f"[+] device Version: firmware={parsed.get('firmware_ver_string')} "
+                              f"({parsed.get('firmware_ver_int')}), is_verified={parsed.get('is_verified')}")
+                except json.JSONDecodeError:
+                    pass
+        except socket.timeout:
+            pass
+
+        cmd = {"id": 1000, "method": "set_wifi_country",
+               "params": {"country": country}, "jsonrpc": "2.0"}
+        payload = json.dumps(cmd) + "\r\n"
+        sock.sendall(payload.encode("utf-8"))
+
+        sock.settimeout(15)
+        buf = b""
+        start = time.time()
+        result = None
+        while time.time() - start < 15:
+            try:
+                chunk = sock.recv(4096)
+                if not chunk:
+                    break
+                buf += chunk
+                for raw in buf.decode("utf-8", errors="replace").split("\n"):
+                    raw = raw.strip()
+                    if not raw:
+                        continue
+                    try:
+                        parsed = json.loads(raw)
+                    except json.JSONDecodeError:
+                        continue
+                    if parsed.get("id") == 1000:
+                        result = parsed
+                        break
+                if result is not None:
+                    break
+            except socket.timeout:
+                break
+        sock.close()
+
+        if result is None:
+            print(f"[!] No response to set_wifi_country within 15s")
+            return False
+
+        code = result.get("code", result.get("result"))
+        print(f"[+] response: {json.dumps(result)}")
+        if code == 0:
+            print(f"[+] set_wifi_country accepted. Server-side reload_country(\"{country}\") running:")
+            print(f"    stop hostapd → ccode={country} → wl country {country} → autochannel_enabled=1 → start hostapd")
+            print(f"    AP should re-stabilize within ~5s. Subsequent boots will be clean.")
+            return True
+        else:
+            print(f"[!] set_wifi_country returned code/result={code}")
+            return False
+    except Exception as e:
+        print(f"[!] Error calling set_wifi_country: {e}")
+        return False
+
+
+def read_initial_version(sock: socket.socket, timeout: float = 3.0) -> Optional[dict]:
+    """
+    On connect, the device immediately emits a Version event JSON line with
+    firmware_ver_int, firmware_ver_string, and is_verified. The `is_verified`
+    boolean is the vendor's gate: if true the device does NOT need RSA-SHA1
+    challenge/response auth (older firmware ≤ app 5.97 / fw_2.7.0), if false
+    the client must run get_verify_str + verify_client (fw_3.0.0 / app 6.45+).
+    This mirrors what v3.0.0+ APKs do via pi_is_verified / is_verified.
+
+    Reads up to `timeout` seconds waiting for the first newline-terminated JSON
+    object. Returns parsed event dict, or None if nothing arrived.
+    """
+    import time
+    sock.settimeout(timeout)
+    buf = b""
+    start = time.time()
+    while time.time() - start < timeout:
+        try:
+            chunk = sock.recv(4096)
+            if not chunk:
+                break
+            buf += chunk
+            if b"\n" in buf:
+                break
+        except socket.timeout:
+            break
+        except Exception:
+            return None
+
+    for raw in buf.decode("utf-8", errors="replace").split("\n"):
+        raw = raw.strip()
+        if not raw:
+            continue
+        try:
+            parsed = json.loads(raw)
+        except json.JSONDecodeError:
+            continue
+        if parsed.get("Event") == "Version":
+            return parsed
+    return None
+
+
 def authenticate_socket(sock: socket.socket, private_key_pem: bytes, command_id: int = 1) -> bool:
     """
     Perform 2-step authentication for firmware 6.45+
@@ -209,10 +434,35 @@ def check_device_ready_for_update(host: str, port: int = 4700, key_path: Path = 
         sock.connect((host, port))
         print(f"[+] Connected to {host}:{port}")
 
-        # Authenticate with device (firmware 6.45+ requires this)
-        if not authenticate_socket(sock, private_key_pem, command_id=1):
-            sock.close()
-            return None, False, "Authentication failed"
+        # Read the initial Version event the device emits on connect.
+        # Two signals gate RSA-SHA1 challenge/response auth:
+        #   1. firmware_ver_int < 2645 (app < 6.45 / fw < 3.0.0) — device doesn't
+        #      implement get_verify_str at all; calling it returns "method not found".
+        #   2. is_verified=true — device says it doesn't need verification.
+        # The vendor APK v3.0.0+ uses both signals. Older APKs (v2.6.1, 2.6.4, 2.7.0)
+        # have NO auth code and push firmware without it.
+        AUTH_MIN_FW_INT = 2645
+        version_event = read_initial_version(sock)
+        needs_auth = True
+        if version_event is not None:
+            fw_str = version_event.get("firmware_ver_string", "?")
+            fw_int = version_event.get("firmware_ver_int", 0)
+            is_verified = version_event.get("is_verified", False)
+            print(f"[+] Device Version event: firmware={fw_str} ({fw_int}), is_verified={is_verified}")
+            if fw_int and fw_int < AUTH_MIN_FW_INT:
+                print(f"[+] firmware_ver_int {fw_int} < {AUTH_MIN_FW_INT} — this firmware doesn't implement auth; skipping")
+                needs_auth = False
+            elif is_verified:
+                print(f"[+] Device reports is_verified=true — skipping RSA auth")
+                needs_auth = False
+        else:
+            print(f"[*] No Version event received on connect — assuming auth required")
+
+        # Authenticate with device (firmware 6.45+ with is_verified=false requires this)
+        if needs_auth:
+            if not authenticate_socket(sock, private_key_pem, command_id=1):
+                sock.close()
+                return None, False, "Authentication failed"
 
         # Now send get_device_state (use command ID 3 since we used 1 and 2 for auth)
         command = {
@@ -708,11 +958,12 @@ class SeestarFirmwareFlasher:
             if not self.transfer_firmware():
                 return False
 
-            # Step 5: Wait for update to complete (using mock timer like Android app)
-            if not self.wait_for_update_completion():
-                print(f"[!] Update wait failed")
-                return False
-
+            # Step 5: Transfer done. Skip the old 200s mock timer — the caller's
+            # post_upgrade_set_wifi_country polls port 4700 continuously and
+            # detects reboot via firmware_ver_int change, so we don't need a
+            # blind wait here. Disconnect cleanly so the post-step starts fresh.
+            print(f"\n[+] Transfer accepted by device. Device will run update_package.sh")
+            print(f"    and reboot on its own. Caller's post-upgrade step will poll for it.")
             return True
 
         except KeyboardInterrupt:
@@ -754,8 +1005,54 @@ Example:
                        help='Connect and send begin_recv but do not transfer')
     parser.add_argument('--key', type=Path, default=DEFAULT_KEY_PATH,
                        help=f'Path to Seestar authentication key (default: {DEFAULT_KEY_PATH})')
+    parser.add_argument('--set-country', default='US', metavar='CC',
+                       help='After upgrade, send set_wifi_country JSON-RPC (default: US). '
+                            'Matches what the vendor APK sends via BLE ble_connect. '
+                            'Set to "none" to skip.')
+    parser.add_argument('--post-upgrade-wait', type=int, default=600,
+                       help='Max seconds to wait for device to reboot into the new '
+                            'firmware before sending set_wifi_country (default: 600). '
+                            'Polls port 4700 continuously starting immediately after '
+                            'transfer; detects reboot via firmware_ver_int change.')
 
     args = parser.parse_args()
+
+    # Known-wedge firmware detection — see UPGRADE_PROBLEM_SUMMARY.md.
+    # These versions wedge the BCM43456 WiFi chip with persistent HT Avail
+    # timeout on our S50. Only recovery is a full rkdeveloptool reflash.
+    # Keyed by substring match on the firmware file path (iscope_2.6.4_*,
+    # fw_2.6.4, etc.). Matches deb Version fields from 2.6.4 through 3.1.2.
+    WEDGE_KNOWN_BAD = [
+        "fw_2.6.4", "iscope_2.6.4", "2582",  # 5.82
+        "fw_2.7.0", "iscope_2.7.0", "2597",  # 5.97
+        "fw_3.0.0", "iscope_3.0.0", "2645",  # 6.45
+        "fw_3.0.1", "iscope_3.0.1", "2658",  # 6.58
+        "fw_3.0.2", "iscope_3.0.2", "2670",  # 6.70
+        "fw_3.1.0", "iscope_3.1.0", "2706",  # 7.06
+        "fw_3.1.1", "iscope_3.1.1", "2718",  # 7.18
+        "fw_3.1.2", "iscope_3.1.2", "2732",  # 7.32
+        "seestar_v2.6.4", "seestar_v2.7.0", "seestar_v3.",
+    ]
+    if args.firmware and any(m in args.firmware for m in WEDGE_KNOWN_BAD):
+        print("=" * 70)
+        print("! KNOWN-BAD FIRMWARE DETECTED !")
+        print("=" * 70)
+        print(f"Target: {args.firmware}")
+        print()
+        print("This firmware wedges the BCM43456 WiFi chip with a persistent")
+        print("HT Avail timeout on this S50. Recovery requires a full")
+        print("rkdeveloptool reflash (~75 min).")
+        print()
+        print("Known-safe endpoint: fw_2.6.1 (app 5.50).")
+        print("See UPGRADE_PROBLEM_SUMMARY.md for full details.")
+        print()
+        print("Pass --force to proceed anyway (NOT RECOMMENDED).")
+        if not args.force:
+            sys.exit(1)
+        else:
+            print("[!] --force override accepted. Proceeding.")
+        print("=" * 70)
+        print()
 
     # Display warnings
     print("=" * 70)
@@ -819,7 +1116,7 @@ Example:
         # Check if file exists
         if not Path(firmware_file).exists():
             print(f"[!] Error: Firmware file '{firmware_file}' not found")
-            print(f"[!] Please build firmware first with build_firmware.sh")
+            print(f"[!] Firmware typically comes from firmware/decompiled/seestar_vX.Y.Z_decompiled/resources/assets/iscope")
             sys.exit(1)
     else:
         # Manual firmware file - detect if x64 from filename
@@ -838,6 +1135,20 @@ Example:
             print(f"[!] Use --force to bypass (not recommended)")
             sys.exit(1)
 
+    # Capture pre-upgrade firmware_ver_int so we can detect reboot by CHANGE.
+    pre_upgrade_fw = None
+    try:
+        _sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        _sock.settimeout(5)
+        _sock.connect((args.host, 4700))
+        _ve = read_initial_version(_sock, timeout=2.0)
+        _sock.close()
+        if _ve is not None:
+            pre_upgrade_fw = _ve.get("firmware_ver_int")
+            print(f"[+] Pre-upgrade firmware: {_ve.get('firmware_ver_string')} ({pre_upgrade_fw})")
+    except Exception as _e:
+        print(f"[*] Could not read pre-upgrade firmware_ver_int: {_e}")
+
     # Create flasher
     flasher = SeestarFirmwareFlasher(args.host, firmware_file, is_x64=is_x64)
 
@@ -850,6 +1161,18 @@ Example:
         flasher.disconnect()
     else:
         success = flasher.flash_firmware()
+        if success and args.set_country and args.set_country.lower() not in ('none', 'no', 'off'):
+            # Post-upgrade: send set_wifi_country as the vendor APK does via
+            # BLE's ble_connect wifi_country field. Runs as soon as the device
+            # is reachable on port 4700 again, aiming to beat any sound-33
+            # retry-loop escalation.
+            post_ok = post_upgrade_set_wifi_country(args.host, args.set_country,
+                                                    max_wait=args.post_upgrade_wait,
+                                                    pre_upgrade_fw=pre_upgrade_fw)
+            if not post_ok:
+                print(f"\n[!] set_wifi_country post-step failed or timed out.")
+                print(f"    Retry manually once reachable:")
+                print(f"    python3 tools/set_wifi_country.py --host {args.host} --country {args.set_country}")
         sys.exit(0 if success else 1)
 
 

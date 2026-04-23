@@ -1,0 +1,46 @@
+#!/bin/bash
+# Auto-configure a Seestar USB-ethernet gadget interface on this host.
+#
+# Invoked by /etc/udev/rules.d/99-seestar-usb.rules with the kernel name
+# (e.g. usb0) as $1. udev fires before the net_setup_link rename to enx*,
+# so we wait briefly and then resolve the actual rndis_host-driven
+# interface on the system.
+
+LOG=/var/log/seestar-usb-up.log
+exec >>"$LOG" 2>&1
+echo "[$(date '+%F %T')] invoked with iface=$1"
+
+# Wait for udev rename to settle
+for i in 1 2 3 4 5; do
+    sleep 0.5
+    for sysif in /sys/class/net/enx*; do
+        [ -d "$sysif" ] || continue
+        drv=$(basename "$(readlink -f "$sysif/device/driver" 2>/dev/null)")
+        if [ "$drv" = "rndis_host" ]; then
+            # Confirm it's actually the Seestar gadget via usb vendor:product
+            usbdev=$(readlink -f "$sysif/device" 2>/dev/null)
+            while [ -n "$usbdev" ] && [ ! -f "$usbdev/idVendor" ]; do
+                usbdev=$(dirname "$usbdev")
+                [ "$usbdev" = "/" ] && break
+            done
+            vid=$(cat "$usbdev/idVendor" 2>/dev/null)
+            pid=$(cat "$usbdev/idProduct" 2>/dev/null)
+            if [ "$vid" = "0525" ] && [ "$pid" = "a4a2" ]; then
+                IFACE=$(basename "$sysif")
+                echo "[$(date '+%F %T')] found Seestar gadget at $IFACE (attempt $i)"
+                break 2
+            fi
+        fi
+    done
+done
+
+if [ -z "$IFACE" ]; then
+    echo "[$(date '+%F %T')] ERROR: no Seestar rndis_host interface found after 2.5s"
+    exit 1
+fi
+
+command -v nmcli >/dev/null && nmcli device set "$IFACE" managed no 2>&1
+ip addr flush dev "$IFACE" 2>&1
+ip addr add 169.254.100.51/16 dev "$IFACE" 2>&1
+ip link set "$IFACE" up 2>&1
+echo "[$(date '+%F %T')] $IFACE configured: $(ip -br addr show "$IFACE")"

@@ -1,0 +1,78 @@
+bcmerrorstr
+bcmerrorstrtable
+bcmsdh_cis_read
+boardrev
+bootp_fmt
+bootp_fmt_t
+bootp_magic_cookie
+cis_tuple_format
+cis_tuple_format_t
+com_cis_ptr
+dhd_attr_nvram_path
+dhd_conf_get_otp
+dhd_read_otp_sw_rgn
+dhdsdio_download_nvram
+dump_nvram
+dump_nvram.part.1
+func_cis_ptr
+gotpkt
+hotplug
+hotplug_slot
+hotplug_user_indicators
+ignore_hotplug
+IOV_BCMERRORSTR
+IOV_SPROM
+is_hotplug_bridge
+nvram_
+NVRAM
+nvram_file_exists
+nvram_path
+nvramrev
+nvram_ularray
+otpcontrol
+otpcontrol1
+otpECCstatus
+otplayout
+otplayoutextension
+otp_mac
+otpprog
+otpprogdata
+otpstatus
+__param_nvram_path
+__param_string_nvram_path
+__param_str_nvram_path
+parmtype=nvram_path:string
+pci_hotplug_bus_size
+pci_hotplug_io_size
+pci_hotplug_mem_size
+process_nvram_vars
+replace_nvram_variable
+sbhndarm.h
+sbhnddma.h
+%s[dhd] Compare NVRAM dl & ul; varsize=%d
+%s[dhd] CONFIG-TRACE) %s : nvram_path=%s
+%s[dhd]  - irq %d [flags %d], firmware: %s, nvram: %s
+%s[dhd] nvram path len exceeds max len of dhdinfo->nv_path
+%s[dhd] nvram path not found
+%s[dhd] %s: dongle nvram file download failed
+%s[dhd] %s: Downloaded NVRAM image is corrupted.
+%s[dhd] %s: Download, Upload and compare of NVRAM succeeded.
+%s[dhd] %s: error %d on reading %d nvram bytes at 0x%08x
+%s[dhd] %s: error reading nvram file: %d
+%s[dhd] %s: firmware path=%s, nvram path=%s
+%s[dhd] %s: func_cis_ptr[%d]=0x%04x
+%s[dhd] %s: HT Avail read error: %d
+%s[dhd] %s: HT Avail request error: %d
+%s[dhd] %s: HT Avail timeout (%d): clkctl 0x%02x
+%s[dhd] %s: no func_cis_ptr[%d]
+%s[dhd] %s: nvram len(%d) > MAX_NVRAMBUF_SIZE(%d)
+%s[dhd] %s: nvram len(%d) MAX_NVRAMBUF_SIZE(%d)
+%s[dhd] %s : nvram path is null
+sdioh_cis_read
+show_nvram_path
+si_is_sprom_available
+spromstatus
+sromotp
+store_nvram_path
+__UNIQUE_ID_nvram_pathtype64
+/vendor/etc/firmware/nvram.txt
