@@ -1,8 +1,10 @@
-# Baseline image directory (large binaries + tool with own git repo)
+# Baseline image directories (large binaries + tool with own git repo)
 baseline-2.42/seestarOS.img
 baseline-2.42/seestarOS.zip
 baseline-2.42/rkdeveloptool/
+baseline-current/
 *.img
+*.img.gz
 *.zip
 
 # Device filesystem extract (rsync from working scope, large)

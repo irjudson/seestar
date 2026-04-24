@@ -25,6 +25,9 @@ a cohort of units upgrading past app 5.82.
   investigation log (`[V]` verified / `[I]` inferred / `[?]` open tags).
   Historical record of every hypothesis we explored, most of which were
   refuted.
+- **[IMAGE_EXTRACTION.md](IMAGE_EXTRACTION.md)** — how to capture a current
+  `seestarOS.img` from a running device (SSH or rkdeveloptool), verify it, and
+  flash it as a recovery baseline.
 - **[HACKING.md](HACKING.md)** — short orientation card.
 
 ## Status (2026-04-22)
@@ -96,7 +99,8 @@ firmware/decompiled/          jadx output of ZWO APKs — copyright ZWO
 firmware/signed/              Pre-signed iscope files
 firmware/factory/             Extracted factory driver (re-extract via tools/extract_factory_bcmdhd.sh)
 firmware/experimental/        Built artifacts (patched .ko — rebuild per SEESTAR_WIFI_WEDGE_FIX.md)
-baseline-2.42/seestarOS.img   Factory image for rkdeveloptool recovery
+baseline-2.42/seestarOS.img   Factory image for rkdeveloptool recovery (donor unit, vintage Apr 2024)
+baseline-current/             Device images captured from your own unit (see IMAGE_EXTRACTION.md)
 s50-fs/                       Your device filesystem snapshot
 apks/                         ZWO APK archive — copyright ZWO
 analysis/jadx/                Decompiled APK contents — copyright ZWO
@@ -128,6 +132,13 @@ The Python client library lives at [github.com/irjudson/seestar-api](https://git
 | `sign_firmware.py` | SHA-1 + RSA PKCS1v15 sign a tar.bz2 as an iscope |
 | `seestar-recovery.sh` | Last-resort rkdeveloptool maskrom reflash + post-flash setup |
 | `extract_firmware.py` | Extract fw package bundles |
+
+### Device image capture
+
+| Tool | Purpose |
+|---|---|
+| `extract_device_image.sh [--ssh-usb\|--ssh-wifi\|--rkdeveloptool]` | Capture a current `seestarOS.img` from a running device (SSH) or in loader mode (rkdeveloptool); outputs gzipped GPT image of p1–p7 to `baseline-current/` |
+| `verify_extracted_image.sh <image.img.gz>` | Validate a captured image: GPT integrity, ext4 mounts, bcmdhd.ko fingerprint, ap_id donor-unit check, ASIAIR app version |
 
 ### On-device config
 
