@@ -100,13 +100,18 @@ ssh-usb|ssh-wifi)
     fi
     pass "SSH reachable"
 
-    # Gather identity for the output filename
-    # ap_id matches the SSID (S50_<ap_id>) and is the recognisable device identifier
-    SERIAL=$($SSH_CMD 'grep -m1 ssid /home/pi/AP_2.4G.conf 2>/dev/null | cut -d_ -f2' \
-        2>/dev/null | tr -d '\r\n ' || echo "unknown")
-    [ -z "$SERIAL" ] && \
-        SERIAL=$($SSH_CMD 'cat /proc/cpuinfo | grep Serial | awk "{print \$3}"' \
-            2>/dev/null | tr -d '\r\n ' | tail -c8 || echo "unknown")
+    # Gather identity for the output filename.
+    # ap_id = upper32 XOR lower32 of the 64-bit /proc/cpuinfo Serial — this is
+    # how the firmware derives the SSID suffix (S50_<ap_id>), so it is the most
+    # recognisable device identifier and never stale.
+    RAW_SERIAL=$($SSH_CMD 'awk "/^Serial/{print \$3}" /proc/cpuinfo' \
+        2>/dev/null | tr -d '\r\n ' || true)
+    if [[ "$RAW_SERIAL" =~ ^[0-9a-fA-F]{8,16}$ ]]; then
+        SERIAL=$(python3 -c \
+            "s=int('${RAW_SERIAL}'.ljust(16,'0'),16); print(f'{(s>>32)^(s&0xFFFFFFFF):08x}')")
+    else
+        SERIAL="unknown"
+    fi
     FW_VER=$($SSH_CMD 'head -1 /home/pi/ASIAIR/bin/Soft03Cmt.txt 2>/dev/null' \
         2>/dev/null | tr -d '\r\n' || echo "unknown")
     DATE_STR=$(date +%Y%m%d)

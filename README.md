@@ -140,6 +140,8 @@ The Python client library lives at [github.com/irjudson/seestar-api](https://git
 | `extract_device_image.sh [--ssh-usb\|--ssh-wifi\|--rkdeveloptool]` | Capture a current `seestarOS.img` from a running device (SSH) or in loader mode (rkdeveloptool); outputs gzipped GPT image of p1–p7 to `baseline-current/` |
 | `verify_extracted_image.sh <image.img.gz>` | Validate a captured image: GPT integrity, ext4 mounts, bcmdhd.ko fingerprint, ap_id donor-unit check, ASIAIR app version |
 
+> **Note:** image capture has been validated on a live unit; restore from a captured image via `rkdeveloptool` has **not yet been tested end-to-end**. Treat `baseline-current/` images as snapshots for inspection and diff, not as verified recovery media.
+
 ### On-device config
 
 | Tool | Purpose |
