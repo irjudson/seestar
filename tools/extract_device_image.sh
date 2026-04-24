@@ -101,8 +101,12 @@ ssh-usb|ssh-wifi)
     pass "SSH reachable"
 
     # Gather identity for the output filename
-    SERIAL=$($SSH_CMD 'cat /proc/cpuinfo | grep Serial | awk "{print \$3}"' \
-        2>/dev/null | tr -d '\r\n ' | tail -c8 || echo "unknown")
+    # ap_id matches the SSID (S50_<ap_id>) and is the recognisable device identifier
+    SERIAL=$($SSH_CMD 'grep -m1 ssid /home/pi/AP_2.4G.conf 2>/dev/null | cut -d_ -f2' \
+        2>/dev/null | tr -d '\r\n ' || echo "unknown")
+    [ -z "$SERIAL" ] && \
+        SERIAL=$($SSH_CMD 'cat /proc/cpuinfo | grep Serial | awk "{print \$3}"' \
+            2>/dev/null | tr -d '\r\n ' | tail -c8 || echo "unknown")
     FW_VER=$($SSH_CMD 'head -1 /home/pi/ASIAIR/bin/Soft03Cmt.txt 2>/dev/null' \
         2>/dev/null | tr -d '\r\n' || echo "unknown")
     DATE_STR=$(date +%Y%m%d)
@@ -205,13 +209,15 @@ esac
 # fdisk/parted don't report a corrupt GPT. rkdeveloptool ignores this.
 warn "Patching GPT alternate-LBA for truncated image..."
 python3 - "$OUT_FILE" "$CAPTURE_END" <<'PYEOF'
-import sys, gzip, struct, zlib, os, tempfile
+import sys, gzip, struct, zlib, os
 
 path = sys.argv[1]
 capture_end = int(sys.argv[2])
+HEADER_BYTES = 34 * 512
+CHUNK = 4 * 1024 * 1024
 
 with gzip.open(path, 'rb') as f:
-    data = bytearray(f.read(34 * 512))
+    data = bytearray(f.read(HEADER_BYTES))
 
 GPT_HDR = 512
 if data[GPT_HDR:GPT_HDR+8] != b'EFI PART':
@@ -230,12 +236,19 @@ struct.pack_into('<I', data, GPT_HDR + 16, 0)
 crc = zlib.crc32(bytes(data[GPT_HDR:GPT_HDR + hdr_size])) & 0xFFFFFFFF
 struct.pack_into('<I', data, GPT_HDR + 16, crc)
 
-with gzip.open(path, 'rb') as f:
-    full = bytearray(f.read())
-full[:len(data)] = data
+# Stream: emit patched header then the rest of the decompressed image in chunks.
+# Never loads the full image into RAM.
 tmp = path + '.gpt_patch.tmp'
-with gzip.open(tmp, 'wb', compresslevel=1) as f:
-    f.write(bytes(full))
+with gzip.open(path, 'rb') as fin:
+    fin.read(HEADER_BYTES)          # discard original header bytes
+    with gzip.open(tmp, 'wb', compresslevel=1) as fout:
+        fout.write(bytes(data))     # write patched header
+        while True:
+            chunk = fin.read(CHUNK)
+            if not chunk:
+                break
+            fout.write(chunk)
+
 os.replace(tmp, path)
 print("  GPT patched OK")
 PYEOF
